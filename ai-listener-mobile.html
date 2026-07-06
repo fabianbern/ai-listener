@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>AI Listener</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg: #080810;
+  --surface: #0f0f1a;
+  --card: #141422;
+  --border: #1c1c30;
+  --green: #00e87a;
+  --green-dim: rgba(0,232,122,0.12);
+  --green-ring: rgba(0,232,122,0.35);
+  --purple: #8b7ff8;
+  --purple-dim: rgba(139,127,248,0.1);
+  --text: #f0f0f8;
+  --sub: #7070a0;
+  --dim: #30304a;
+  --red: #ff3d5a;
+}
+
+html { height: 100%; }
+body {
+  min-height: 100%; min-height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-weight: 300;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Header ── */
+.hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  padding-top: max(14px, env(safe-area-inset-top));
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.hdr-logo {
+  display: flex; align-items: center; gap: 9px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; font-weight: 500; letter-spacing: .06em;
+}
+.hdr-icon {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+}
+.pill {
+  display: flex; align-items: center; gap: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: .1em;
+  padding: 5px 11px; border-radius: 20px;
+  border: 1px solid var(--border);
+  color: var(--sub);
+  transition: all .3s;
+}
+.pill.on { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+.pill-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--dim); transition: all .3s; }
+.pill.on .pill-dot { background: var(--green); box-shadow: 0 0 7px var(--green); animation: blink 1.4s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ── Transcript scroll area ── */
+.scroll {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 20px 20px 8px;
+  display: flex;
+  flex-direction: column;
+}
+.scroll::-webkit-scrollbar { display: none; }
+
+.empty-state {
+  flex: 1;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center; gap: 12px;
+  padding-bottom: 60px;
+}
+.empty-ring {
+  width: 80px; height: 80px; border-radius: 50%;
+  border: 2px dashed var(--dim);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px; opacity: .5;
+  margin-bottom: 4px;
+}
+.empty-state h2 { font-size: 16px; font-weight: 500; color: var(--sub); }
+.empty-state p { font-size: 13px; color: var(--dim); max-width: 240px; line-height: 1.7; }
+
+.t-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--dim); margin-bottom: 12px;
+}
+.t-block {
+  font-size: 16px; line-height: 1.85; font-weight: 300;
+  color: var(--text); flex: 1;
+}
+.seg { display: inline; }
+.seg.fresh { color: #fff; }
+.cursor {
+  display: inline-block; width: 2px; height: 16px;
+  background: var(--green); margin-left: 2px;
+  vertical-align: middle;
+  animation: cur 1s step-end infinite;
+}
+@keyframes cur { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* ── AI responses ── */
+.ai-section { margin-top: 24px; display: flex; flex-direction: column; gap: 12px; }
+.ai-card {
+  background: var(--card);
+  border: 1px solid rgba(139,127,248,.2);
+  border-radius: 14px;
+  padding: 14px 16px;
+  animation: slideUp .3s ease;
+}
+@keyframes slideUp { from{transform:translateY(10px);opacity:0} to{transform:translateY(0);opacity:1} }
+.ai-card-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--purple); margin-bottom: 8px;
+  display: flex; align-items: center; gap: 6px;
+}
+.ai-card-meta::before {
+  content: '✦'; font-size: 8px;
+}
+.ai-card-body { font-size: 14px; line-height: 1.75; color: var(--text); }
+
+.thinking-card {
+  background: var(--card);
+  border: 1px solid rgba(139,127,248,.15);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex; align-items: center; gap: 10px;
+  color: var(--purple); font-size: 13px;
+}
+.dots span {
+  display: inline-block; width: 5px; height: 5px;
+  border-radius: 50%; background: var(--purple); margin: 0 2px;
+  animation: bounce 1.2s ease-in-out infinite;
+}
+.dots span:nth-child(2){animation-delay:.15s}
+.dots span:nth-child(3){animation-delay:.3s}
+@keyframes bounce { 0%,80%,100%{transform:translateY(0);opacity:.4} 40%{transform:translateY(-4px);opacity:1} }
+
+/* ── Bottom controls ── */
+.controls {
+  flex-shrink: 0;
+  padding: 16px 20px;
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Big mic button */
+.mic-wrap {
+  display: flex; align-items: center; justify-content: center;
+  padding: 4px 0;
+}
+.mic-btn {
+  width: 80px; height: 80px; border-radius: 50%;
+  border: none; cursor: pointer;
+  background: var(--green);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 3px;
+  transition: transform .15s, filter .15s;
+  position: relative;
+  -webkit-user-select: none; user-select: none;
+}
+.mic-btn:active { transform: scale(.93); }
+.mic-btn.on { background: var(--red); }
+.mic-btn.on::after {
+  content: '';
+  position: absolute; inset: -8px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,61,90,.4);
+  animation: ripple 1.5s ease-out infinite;
+}
+@keyframes ripple { 0%{transform:scale(1);opacity:1} 100%{transform:scale(1.5);opacity:0} }
+.mic-icon { font-size: 28px; line-height: 1; }
+.mic-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: .1em; color: #000; font-weight: 500; }
+.mic-btn.on .mic-label { color: #fff; }
+.mic-btn.on .mic-icon { filter: brightness(10); }
+
+/* Secondary buttons */
+.btn-row { display: flex; gap: 10px; }
+.btn-analyze {
+  flex: 1;
+  padding: 13px;
+  border-radius: 12px;
+  border: 1px solid rgba(139,127,248,.4);
+  background: var(--purple-dim);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; letter-spacing: .04em;
+  color: var(--purple); cursor: pointer;
+  transition: all .2s;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+}
+.btn-analyze:active:not(:disabled) { background: rgba(139,127,248,.2); }
+.btn-analyze:disabled { opacity: .25; cursor: not-allowed; }
+.btn-cfg {
+  padding: 13px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: transparent;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; color: var(--sub); cursor: pointer;
+  transition: all .2s;
+}
+.btn-cfg:active { background: var(--card); }
+
+/* ── Modal ── */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.75);
+  display: flex; align-items: flex-end;
+  z-index: 99;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.overlay.hide { display: none; }
+.sheet {
+  width: 100%;
+  background: var(--surface);
+  border-radius: 20px 20px 0 0;
+  border-top: 1px solid var(--border);
+  padding: 20px 20px;
+  padding-bottom: max(28px, env(safe-area-inset-bottom));
+  animation: sheetUp .25s ease;
+}
+@keyframes sheetUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.sheet-handle {
+  width: 36px; height: 4px; border-radius: 2px;
+  background: var(--dim); margin: 0 auto 20px;
+}
+.sheet h2 { font-size: 17px; font-weight: 500; margin-bottom: 6px; }
+.sheet > p { font-size: 13px; color: var(--sub); margin-bottom: 20px; line-height: 1.6; }
+.seg-ctrl {
+  display: flex; gap: 4px;
+  background: var(--bg); border-radius: 10px; padding: 4px;
+  margin-bottom: 18px;
+}
+.seg-btn {
+  flex: 1; padding: 9px; border: none; background: transparent;
+  border-radius: 7px; font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--sub); cursor: pointer; transition: all .2s;
+}
+.seg-btn.on { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+fieldset { border: none; }
+.f-label {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--dim); margin-bottom: 7px;
+}
+.f-input {
+  width: 100%; padding: 13px 14px;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text);
+  font-family: 'JetBrains Mono', monospace; font-size: 13px;
+  outline: none; margin-bottom: 4px;
+  transition: border-color .2s;
+  -webkit-appearance: none;
+}
+.f-input:focus { border-color: var(--purple); }
+.f-hint { font-size: 11px; color: var(--dim); margin-bottom: 18px; line-height: 1.5; }
+.btn-save {
+  width: 100%; padding: 14px;
+  background: var(--purple); border: none; border-radius: 12px;
+  color: #fff; font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  transition: filter .2s;
+}
+.btn-save:active { filter: brightness(1.15); }
+.demo-note {
+  margin-top: 12px; padding: 11px 14px;
+  background: var(--green-dim); border: 1px solid rgba(0,232,122,.2);
+  border-radius: 10px; font-size: 12px; color: var(--green); line-height: 1.6;
+}
+
+/* ── Toast ── */
+.toast {
+  position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%);
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 18px;
+  font-size: 13px; font-family: 'JetBrains Mono', monospace;
+  z-index: 200; white-space: nowrap;
+  animation: toastIn .2s ease;
+  max-width: 90vw; text-align: center;
+}
+@keyframes toastIn { from{opacity:0;transform:translate(-50%,6px)} to{opacity:1;transform:translate(-50%,0)} }
+</style>
+</head>
+<body>
+
+<!-- Bottom sheet modal -->
+<div class="overlay hide" id="overlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2>API-nycklar</h2>
+    <p>Lagras bara lokalt på din telefon. Utan nycklar körs appen i demo-läge.</p>
+    <div class="seg-ctrl">
+      <button class="seg-btn on" onclick="tab('oai',this)">OpenAI · Whisper</button>
+      <button class="seg-btn" onclick="tab('ant',this)">Anthropic · Claude</button>
+    </div>
+    <div id="pane-oai">
+      <label class="f-label">OpenAI API Key</label>
+      <input class="f-input" type="password" id="k-oai" placeholder="sk-proj-…" autocomplete="off">
+      <p class="f-hint">För Whisper-transkribering. Utan denna används demo-text.</p>
+    </div>
+    <div id="pane-ant" style="display:none">
+      <label class="f-label">Anthropic API Key</label>
+      <input class="f-input" type="password" id="k-ant" placeholder="sk-ant-…" autocomplete="off">
+      <p class="f-hint">För Claude-analys. Utan denna visas ett demo-svar.</p>
+    </div>
+    <button class="btn-save" onclick="saveKeys()">Spara</button>
+    <div class="demo-note">💡 Tryck Spara utan nycklar för att köra i demo-läge.</div>
+  </div>
+</div>
+
+<!-- App -->
+<div class="hdr">
+  <div class="hdr-logo">
+    <div class="hdr-icon">◈</div>
+    AI Listener
+  </div>
+  <div class="pill" id="pill">
+    <div class="pill-dot"></div>
+    <span id="pill-txt">INAKTIV</span>
+  </div>
+</div>
+
+<div class="scroll" id="scroll">
+  <div class="empty-state" id="empty">
+    <div class="empty-ring">🎙</div>
+    <h2>Redo att lyssna</h2>
+    <p>Tryck på mikrofon-knappen nedan. Appen lyssnar via telefonens mikrofon.</p>
+  </div>
+</div>
+
+<div class="controls">
+  <div class="mic-wrap">
+    <button class="mic-btn" id="mic-btn" onclick="toggle()">
+      <span class="mic-icon">🎙</span>
+      <span class="mic-label" id="mic-label">LYSSNA</span>
+    </button>
+  </div>
+  <div class="btn-row">
+    <button class="btn-analyze" id="btn-analyze" onclick="analyze()" disabled>
+      ✦ Analysera med AI
+    </button>
+    <button class="btn-cfg" onclick="showSheet()">⚙</button>
+  </div>
+</div>
+
+<script>
+// ── State ──
+let on = false;
+let stream = null, recorder = null, chunks = [], cycleTimer = null;
+let fullText = '', segs = [], demoIdx = 0, analyzing = false;
+let mediaSupported = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+
+// ── Keys ──
+const K = {
+  get oai(){ return localStorage.getItem('al_oai') || '' },
+  get ant(){ return localStorage.getItem('al_ant') || '' }
+};
+function saveKeys(){
+  const o = document.getElementById('k-oai').value.trim();
+  const a = document.getElementById('k-ant').value.trim();
+  if(o) localStorage.setItem('al_oai', o);
+  if(a) localStorage.setItem('al_ant', a);
+  hideSheet();
+  toast(o || a ? 'Nycklar sparade ✓' : 'Kör i demo-läge');
+}
+function showSheet(){
+  document.getElementById('k-oai').value = K.oai;
+  document.getElementById('k-ant').value = K.ant;
+  document.getElementById('overlay').classList.remove('hide');
+}
+function hideSheet(){ document.getElementById('overlay').classList.add('hide'); }
+function tab(id, el){
+  ['oai','ant'].forEach(t => {
+    document.getElementById('pane-'+t).style.display = t===id ? 'block' : 'none';
+  });
+  document.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('on'));
+  el.classList.add('on');
+}
+document.getElementById('overlay').addEventListener('click', e => {
+  if(e.target === e.currentTarget) hideSheet();
+});
+
+// ── Record toggle ──
+async function toggle(){ on ? stop() : await start(); }
+
+async function start(){
+  if(!mediaSupported){
+    toast('Mikrofon stöds inte i denna webbläsare');
+    return;
+  }
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 16000 }
+    });
+    on = true;
+    updateUI();
+    cycle();
+    cycleTimer = setInterval(cycle, 8000);
+  } catch(e) {
+    toast('Mikrofonåtkomst nekades — kontrollera inställningar');
+    console.error(e);
+  }
+}
+
+function stop(){
+  on = false;
+  if(stream){ stream.getTracks().forEach(t => t.stop()); stream = null; }
+  if(recorder && recorder.state !== 'inactive') recorder.stop();
+  clearInterval(cycleTimer);
+  updateUI();
+  document.querySelector('.cursor')?.remove();
+}
+
+function cycle(){
+  if(!stream || !on) return;
+  chunks = [];
+  const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+    ? 'audio/webm;codecs=opus'
+    : MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg';
+
+  try { recorder = new MediaRecorder(stream, { mimeType: mime }); }
+  catch(e) { recorder = new MediaRecorder(stream); }
+
+  recorder.ondataavailable = e => { if(e.data.size > 0) chunks.push(e.data); };
+  recorder.onstop = async () => {
+    if(!chunks.length) return;
+    const blob = new Blob(chunks, { type: mime });
+    await transcribe(blob);
+  };
+  recorder.start();
+  setTimeout(() => {
+    if(recorder?.state === 'recording') recorder.stop();
+  }, 7400);
+}
+
+// ── Transcribe ──
+async function transcribe(blob){
+  if(!K.oai){ demoTick(); return; }
+  try {
+    const fd = new FormData();
+    fd.append('file', blob, 'audio.webm');
+    fd.append('model', 'whisper-1');
+    fd.append('language', 'sv');
+    const r = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + K.oai },
+      body: fd
+    });
+    if(!r.ok){ toast('Whisper-fel: ' + r.status); return; }
+    const d = await r.json();
+    if(d.text?.trim()) appendSeg(d.text.trim());
+  } catch(e) {
+    toast('Nätverksfel — kontrollera anslutning');
+  }
+}
+
+const DEMO = [
+  'Det här är en demo av AI Listener på mobil.',
+  'Appen lyssnar via telefonens mikrofon och transkriberar i realtid.',
+  'Perfekt för möten, föreläsningar och konversationer.',
+  'Du kan fråga AI:n vad som sagts, extrahera beslut eller få en sammanfattning.',
+  'Tryck på "Analysera med AI" för att testa AI-analysen.',
+  'Med riktiga API-nycklar transkriberas ditt riktiga tal via Whisper.',
+  'Prova att prata in i mikrofonen — det fungerar direkt!'
+];
+let di = 0;
+function demoTick(){ if(on) appendSeg(DEMO[di++ % DEMO.length]); }
+
+function appendSeg(txt){
+  fullText += (fullText ? ' ' : '') + txt;
+  segs.push(txt);
+  renderTranscript();
+  document.getElementById('btn-analyze').disabled = false;
+}
+
+function renderTranscript(){
+  const sc = document.getElementById('scroll');
+  document.getElementById('empty')?.remove();
+
+  let label = document.getElementById('t-label');
+  if(!label){
+    label = document.createElement('div');
+    label.id = 't-label'; label.className = 't-label';
+    label.textContent = 'Transkribering';
+    sc.insertBefore(label, sc.querySelector('.ai-section'));
+  }
+
+  let block = document.getElementById('t-block');
+  if(!block){
+    block = document.createElement('div');
+    block.id = 't-block'; block.className = 't-block';
+    const ai = sc.querySelector('.ai-section');
+    ai ? sc.insertBefore(block, ai) : sc.appendChild(block);
+  }
+
+  block.innerHTML = '';
+  segs.forEach((s, i) => {
+    const span = document.createElement('span');
+    span.className = 'seg' + (i === segs.length - 1 ? ' fresh' : '');
+    span.textContent = s + ' ';
+    block.appendChild(span);
+  });
+
+  if(on){
+    const c = document.createElement('span');
+    c.className = 'cursor';
+    block.appendChild(c);
+  }
+  sc.scrollTop = sc.scrollHeight;
+  setTimeout(() => block.querySelector('.fresh')?.classList.remove('fresh'), 2000);
+}
+
+// ── Analyze ──
+async function analyze(){
+  if(analyzing || !fullText.trim()) return;
+  analyzing = true;
+  document.getElementById('btn-analyze').disabled = true;
+
+  const sc = document.getElementById('scroll');
+  let aiSec = document.getElementById('ai-sec');
+  if(!aiSec){
+    aiSec = document.createElement('div');
+    aiSec.id = 'ai-sec'; aiSec.className = 'ai-section';
+    sc.appendChild(aiSec);
+  }
+
+  // Thinking card
+  const th = document.createElement('div');
+  th.className = 'thinking-card'; th.id = 'thinking';
+  th.innerHTML = '<span>AI analyserar</span><div class="dots"><span></span><span></span><span></span></div>';
+  aiSec.appendChild(th);
+  sc.scrollTop = sc.scrollHeight;
+
+  let reply = '';
+  if(K.ant){
+    reply = await callClaude(fullText, K.ant);
+  } else {
+    await new Promise(r => setTimeout(r, 1800));
+    reply = demoReply();
+  }
+
+  document.getElementById('thinking')?.remove();
+
+  const t = new Date().toLocaleTimeString('sv-SE', { hour:'2-digit', minute:'2-digit' });
+  const card = document.createElement('div');
+  card.className = 'ai-card';
+  card.innerHTML = `<div class="ai-card-meta">Claude · ${t}</div><div class="ai-card-body">${safe(reply)}</div>`;
+  aiSec.appendChild(card);
+  sc.scrollTop = sc.scrollHeight;
+
+  analyzing = false;
+  document.getElementById('btn-analyze').disabled = false;
+}
+
+async function callClaude(text, key){
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 400,
+        messages: [{
+          role: 'user',
+          content: `Du är en AI som lyssnar på samtal i realtid via mikrofon. Här är transkriberingen:\n\n"${text}"\n\nGe en kort, skarp analys på svenska (max 120 ord): vad handlar det om, vad är viktigt, finns det beslut eller åtgärdspunkter att lyfta fram?`
+        }]
+      })
+    });
+    if(!r.ok) throw new Error(r.status);
+    const d = await r.json();
+    return d.content?.[0]?.text || 'Inget svar från Claude.';
+  } catch(e) {
+    return 'Claude-fel: ' + e.message + '. Kontrollera din Anthropic-nyckel.';
+  }
+}
+
+const DREPLIES = [
+  'Innehållet visar en demo av AI Listener-appen på mobil. Kärnan: realtidstranskribering via mikrofon möjliggör kontinuerlig AI-analys utan manuella anteckningar. Praktisk nytta är störst i möten och föreläsningar. Nästa steg: lägg till riktiga API-nycklar för att aktivera Whisper och Claude.',
+  'Transkriberingen beskriver appens funktionalitet och use-cases. Nyckelinsikt: mobilanpassningen gör verktyget tillgängligt i fler situationer än datorversionen — t.ex. rörliga möten och konferenser. Åtgärd: testa med riktigt tal och lägg till API-nycklar för full funktion.'
+];
+let dri = 0;
+function demoReply(){ return DREPLIES[dri++ % DREPLIES.length]; }
+
+// ── UI ──
+function updateUI(){
+  const btn = document.getElementById('mic-btn');
+  const lbl = document.getElementById('mic-label');
+  const pill = document.getElementById('pill');
+
+  btn.classList.toggle('on', on);
+  lbl.textContent = on ? 'STOPP' : 'LYSSNA';
+  pill.classList.toggle('on', on);
+  document.getElementById('pill-txt').textContent = on ? 'AI LYSSNAR' : 'INAKTIV';
+}
+
+function clearAll(){
+  stop();
+  fullText = ''; segs = []; di = 0;
+  document.getElementById('scroll').innerHTML = `
+    <div class="empty-state" id="empty">
+      <div class="empty-ring">🎙</div>
+      <h2>Redo att lyssna</h2>
+      <p>Tryck på mikrofon-knappen nedan. Appen lyssnar via telefonens mikrofon.</p>
+    </div>`;
+  document.getElementById('btn-analyze').disabled = true;
+}
+
+function safe(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+          .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+}
+
+function toast(msg){
+  document.querySelectorAll('.toast').forEach(t => t.remove());
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3200);
+}
+</script>
+</body>
+</html>
