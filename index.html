@@ -100,6 +100,12 @@ body{min-height:100dvh;background:var(--bg);color:var(--text);font-family:'Inter
 
 .toast{position:fixed;bottom:120px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 18px;font-size:13px;font-family:'JetBrains Mono',monospace;z-index:200;white-space:nowrap;animation:toastIn .2s ease;max-width:90vw;text-align:center}
 @keyframes toastIn{from{opacity:0;transform:translate(-50%,6px)}to{opacity:1;transform:translate(-50%,0)}}
+
+/* Floating stop button — always visible on top */
+.float-stop{position:fixed;top:max(16px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:9999;background:var(--red);border:none;border-radius:30px;padding:11px 22px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;color:#fff;cursor:pointer;display:none;align-items:center;gap:8px;box-shadow:0 4px 24px rgba(255,61,90,.6);animation:floatIn .3s ease}
+.float-stop.show{display:flex}
+@keyframes floatIn{from{transform:translateX(-50%) translateY(-8px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}
+.float-dot{width:8px;height:8px;border-radius:50%;background:#fff;animation:blink 1s ease-in-out infinite}
 </style>
 </head>
 <body>
@@ -116,6 +122,12 @@ body{min-height:100dvh;background:var(--bg);color:var(--text);font-family:'Inter
     <div class="demo-note">💡 "Spela in"-knappen fungerar bara på datorn i Chrome — inte på telefon.</div>
   </div>
 </div>
+
+<!-- Floating stop button — always on top during screen share -->
+<button class="float-stop" id="float-stop" onclick="stopScreen()">
+  <div class="float-dot"></div>
+  ⏹ Sluta spela in
+</button>
 
 <div class="hdr">
   <div class="logo">
@@ -230,6 +242,7 @@ async function startScreen(){
     screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
     screenOn = true;
     updateUI();
+    document.getElementById('float-stop').classList.add('show');
     toast('Skärminspelning igång — tar bild var 10:e sekund');
 
     // Take first snapshot immediately
@@ -250,6 +263,7 @@ function stopScreen(){
   if(screenStream){ screenStream.getTracks().forEach(t=>t.stop()); screenStream=null; }
   clearInterval(screenInterval);
   updateUI();
+  document.getElementById('float-stop').classList.remove('show');
   toast('Skärminspelning stoppad');
 }
 
