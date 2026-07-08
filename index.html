@@ -229,6 +229,8 @@ function stopMic(){
 }
 
 // ── Screen recording ──
+let snapshots = []; // stored {dataUrl, time}
+
 async function toggleScreen(){
   screenOn ? stopScreen() : await startScreen();
 }
@@ -243,18 +245,14 @@ async function startScreen(){
     screenOn = true;
     updateUI();
     document.getElementById('float-stop').classList.add('show');
-    toast('Skärminspelning igång — tar bild var 10:e sekund');
+    toast('Inspelning igång — tar skärmbild var 10:e sekund');
 
-    // Take first snapshot immediately
     await takeSnapshot();
-    // Then every 10 seconds
     screenInterval = setInterval(takeSnapshot, 10000);
-
-    // Stop if user ends share via browser UI
     screenStream.getVideoTracks()[0].onended = () => stopScreen();
 
   } catch(e){
-    if(e.name !== 'NotAllowedError') toast('Kunde inte starta skärminspelning: ' + e.message);
+    if(e.name !== 'NotAllowedError') toast('Kunde inte starta: ' + e.message);
   }
 }
 
@@ -262,9 +260,12 @@ function stopScreen(){
   screenOn = false;
   if(screenStream){ screenStream.getTracks().forEach(t=>t.stop()); screenStream=null; }
   clearInterval(screenInterval);
-  updateUI();
   document.getElementById('float-stop').classList.remove('show');
-  toast('Skärminspelning stoppad');
+  updateUI();
+  updateSnapshotBar();
+  if(snapshots.length > 0){
+    toast(`✓ ${snapshots.length} bilder sparade — tryck "Analysera bilder" när du är redo`);
+  }
 }
 
 async function takeSnapshot(){
@@ -272,27 +273,30 @@ async function takeSnapshot(){
   const track = screenStream.getVideoTracks()[0];
   if(!track) return;
 
-  // Capture frame using ImageCapture API or canvas fallback
   let dataUrl = null;
   try {
     if(window.ImageCapture){
       const capture = new ImageCapture(track);
       const bitmap = await capture.grabFrame();
       const canvas = document.createElement('canvas');
-      canvas.width = bitmap.width;
-      canvas.height = bitmap.height;
-      canvas.getContext('2d').drawImage(bitmap, 0, 0);
-      dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+      // Scale down to max 1280px wide to save tokens
+      const scale = Math.min(1, 1280 / bitmap.width);
+      canvas.width = bitmap.width * scale;
+      canvas.height = bitmap.height * scale;
+      canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      dataUrl = canvas.toDataURL('image/jpeg', 0.75);
     } else {
-      // Fallback: draw video element
       const video = document.createElement('video');
-      video.srcObject = screenStream;
+      video.srcObject = new MediaStream([track]);
+      video.muted = true;
+      await new Promise(r => { video.onloadedmetadata = r; });
       await video.play();
       const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth || 1280;
-      canvas.height = video.videoHeight || 720;
-      canvas.getContext('2d').drawImage(video, 0, 0);
-      dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+      const scale = Math.min(1, 1280 / (video.videoWidth || 1280));
+      canvas.width = (video.videoWidth || 1280) * scale;
+      canvas.height = (video.videoHeight || 720) * scale;
+      canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+      dataUrl = canvas.toDataURL('image/jpeg', 0.75);
       video.pause();
     }
   } catch(e){
@@ -301,84 +305,104 @@ async function takeSnapshot(){
   }
 
   if(!dataUrl) return;
-  lastSnapshot = dataUrl;
-  showSnapshotPreview(dataUrl);
 
-  // Auto-analyze with Claude if key exists
-  if(K.ant) await analyzeScreen(dataUrl);
+  const snap = { dataUrl, time: new Date().toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit',second:'2-digit'}) };
+  snapshots.push(snap);
+  updateSnapshotBar();
 }
 
-function showSnapshotPreview(dataUrl){
+function updateSnapshotBar(){
+  let bar = document.getElementById('snap-bar');
   const sc = document.getElementById('scroll');
   document.getElementById('empty')?.remove();
 
-  let preview = document.getElementById('screen-preview');
-  if(!preview){
-    preview = document.createElement('div');
-    preview.id='screen-preview'; preview.className='screen-preview';
-    const aiSec = document.getElementById('ai-sec');
-    aiSec ? sc.insertBefore(preview, aiSec) : sc.appendChild(preview);
+  if(!bar){
+    bar = document.createElement('div');
+    bar.id = 'snap-bar';
+    bar.style.cssText = `
+      background:var(--card);border:1px solid rgba(255,159,67,.3);border-radius:14px;
+      padding:14px 16px;margin-bottom:16px;display:flex;flex-direction:column;gap:10px;
+    `;
+    sc.insertBefore(bar, sc.firstChild);
   }
-  const t = new Date().toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  preview.innerHTML = `<img src="${dataUrl}"><div class="screen-label">📺 Skärmbild · ${t}</div>`;
-  sc.scrollTop = sc.scrollHeight;
+
+  const count = snapshots.length;
+  const lastTime = count > 0 ? snapshots[count-1].time : '';
+  const isRecording = screenOn;
+
+  bar.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:18px">📸</span>
+        <div>
+          <div style="font-size:14px;font-weight:500;color:var(--orange)">${count} ${count===1?'bild':'bilder'} sparade</div>
+          ${lastTime ? `<div style="font-size:11px;color:var(--dim);font-family:'JetBrains Mono',monospace">Senaste: ${lastTime}</div>` : ''}
+        </div>
+      </div>
+      ${isRecording ? `<div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--orange);display:flex;align-items:center;gap:5px"><div style="width:6px;height:6px;border-radius:50%;background:var(--orange);animation:blink 1s ease-in-out infinite"></div>SPELAR IN</div>` : ''}
+    </div>
+    ${count > 0 ? `
+    <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px">
+      ${snapshots.slice(-5).map((s,i) => `
+        <div style="flex-shrink:0;position:relative;width:80px;height:50px;border-radius:6px;overflow:hidden;border:1px solid var(--border)">
+          <img src="${s.dataUrl}" style="width:100%;height:100%;object-fit:cover">
+          <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);font-size:8px;color:#fff;padding:2px 4px;font-family:'JetBrains Mono',monospace">${s.time}</div>
+        </div>
+      `).join('')}
+    </div>
+    <button onclick="analyzeSnapshots()" ${!K.ant ? 'disabled title="Lägg till API-nyckel"' : ''} style="
+      width:100%;padding:11px;border-radius:10px;border:1px solid rgba(255,159,67,.5);
+      background:rgba(255,159,67,.1);font-family:'JetBrains Mono',monospace;font-size:12px;
+      letter-spacing:.04em;color:var(--orange);cursor:pointer;
+      ${!K.ant ? 'opacity:.4;cursor:not-allowed' : ''}
+    ">✦ Analysera ${count} ${count===1?'bild':'bilder'} med AI</button>
+    ` : ''}
+  `;
+  sc.scrollTop = 0; // scroll to top to see the bar
 }
 
-async function analyzeScreen(dataUrl){
-  if(!K.ant) return;
+async function analyzeSnapshots(){
+  if(!K.ant || snapshots.length === 0) return;
 
   const sc = document.getElementById('scroll');
   let aiSec = document.getElementById('ai-sec');
-  if(!aiSec){
-    aiSec = document.createElement('div');
-    aiSec.id='ai-sec'; aiSec.className='ai-section';
-    sc.appendChild(aiSec);
-  }
+  if(!aiSec){ aiSec=document.createElement('div'); aiSec.id='ai-sec'; aiSec.className='ai-section'; sc.appendChild(aiSec); }
 
-  const th = document.createElement('div');
-  th.className='thinking-card'; th.style.color='var(--orange)'; th.id='thinking-screen';
-  th.innerHTML='<span>Analyserar skärm</span><div class="dots"><span></span><span></span><span></span></div>';
-  aiSec.appendChild(th);
-  sc.scrollTop = sc.scrollHeight;
+  const th=document.createElement('div'); th.className='thinking-card'; th.style.color='var(--orange)'; th.id='thinking-screen';
+  th.innerHTML=`<span>Analyserar ${snapshots.length} skärmbilder</span><div class="dots"><span></span><span></span><span></span></div>`;
+  aiSec.appendChild(th); sc.scrollTop=sc.scrollHeight;
 
   try {
-    const base64 = dataUrl.split(',')[1];
+    // Send up to 4 most recent snapshots to Claude
+    const toSend = snapshots.slice(-4);
+    const content = [];
+    toSend.forEach((s, i) => {
+      content.push({ type:'text', text:`Skärmbild ${i+1} (tagen ${s.time}):` });
+      content.push({ type:'image', source:{ type:'base64', media_type:'image/jpeg', data:s.dataUrl.split(',')[1] } });
+    });
+    content.push({ type:'text', text:`Det här är ${toSend.length} skärmbilder tagna med några sekunders mellanrum. Vad ser du? Sammanfatta kortfattat på svenska (max 150 ord) vad som visas, vad som är viktigt eller intressant, och om det sker några förändringar mellan bilderna.` });
+
     const r = await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'x-api-key':K.ant,
-        'anthropic-version':'2023-06-01',
-        'anthropic-dangerous-direct-browser-access':'true'
-      },
-      body: JSON.stringify({
-        model:'claude-sonnet-4-6', max_tokens:400,
-        messages:[{
-          role:'user',
-          content:[
-            { type:'image', source:{ type:'base64', media_type:'image/jpeg', data:base64 } },
-            { type:'text', text:'Vad ser du på den här skärmbilden? Beskriv kortfattat på svenska (max 100 ord) vad som visas och vad som är viktigt eller intressant.' }
-          ]
-        }]
-      })
+      headers:{'Content-Type':'application/json','x-api-key':K.ant,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:500, messages:[{role:'user',content}] })
     });
+    if(!r.ok) throw new Error('HTTP '+r.status);
     const d = await r.json();
     const reply = d.content?.[0]?.text || 'Inget svar.';
 
     document.getElementById('thinking-screen')?.remove();
-    const t = new Date().toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'});
-    const card = document.createElement('div');
-    card.className='ai-card screen-card';
-    card.innerHTML=`<div class="ai-meta screen">📺 Skärm · ${t}</div><div class="ai-body">${safe(reply)}</div>`;
-    aiSec.appendChild(card);
-    sc.scrollTop = sc.scrollHeight;
-    document.getElementById('btn-ai').disabled = false;
+    const t=new Date().toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'});
+    const card=document.createElement('div'); card.className='ai-card screen-card';
+    card.innerHTML=`<div class="ai-meta screen">📺 Skärm · ${t} · ${toSend.length} bilder</div><div class="ai-body">${safe(reply)}</div>`;
+    aiSec.appendChild(card); sc.scrollTop=sc.scrollHeight;
 
   } catch(e){
     document.getElementById('thinking-screen')?.remove();
-    toast('Skärmanalys misslyckades: ' + e.message);
+    toast('Analys misslyckades: ' + e.message);
   }
 }
+
 
 // ── Transcript ──
 function renderTranscript(interim){
