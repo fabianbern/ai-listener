@@ -11,31 +11,33 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
   --bg:#080810;--surface:#0f0f1a;--card:#141422;--border:#1c1c30;
-  --green:#00e87a;--green-dim:rgba(0,232,122,0.12);--green-ring:rgba(0,232,122,0.3);
+  --green:#00e87a;--green-dim:rgba(0,232,122,0.12);
   --purple:#8b7ff8;--purple-dim:rgba(139,127,248,0.1);
+  --orange:#ff9f43;--orange-dim:rgba(255,159,67,0.1);
   --text:#f0f0f8;--sub:#7070a0;--dim:#30304a;--red:#ff3d5a;
 }
 html{height:100%}
-body{min-height:100%;min-height:100dvh;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-weight:300;display:flex;flex-direction:column;overflow:hidden}
+body{min-height:100dvh;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-weight:300;display:flex;flex-direction:column;overflow:hidden}
 
-/* Header */
 .hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;padding-top:max(14px,env(safe-area-inset-top));background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
 .logo{display:flex;align-items:center;gap:9px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;letter-spacing:.06em}
 .logo-icon{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#6c5ce7,#a29bfe);display:flex;align-items:center;justify-content:center;font-size:15px}
-.pill{display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;padding:5px 11px;border-radius:20px;border:1px solid var(--border);color:var(--sub);transition:all .3s}
-.pill.on{border-color:var(--green);color:var(--green);background:var(--green-dim)}
-.pdot{width:6px;height:6px;border-radius:50%;background:var(--dim);transition:all .3s}
-.pill.on .pdot{background:var(--green);box-shadow:0 0 7px var(--green);animation:blink 1.4s ease-in-out infinite}
+.pills{display:flex;gap:6px}
+.pill{display:flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;padding:4px 9px;border-radius:20px;border:1px solid var(--border);color:var(--sub);transition:all .3s}
+.pill.on-mic{border-color:var(--green);color:var(--green);background:var(--green-dim)}
+.pill.on-screen{border-color:var(--orange);color:var(--orange);background:var(--orange-dim)}
+.pdot{width:5px;height:5px;border-radius:50%;background:var(--dim);transition:all .3s;flex-shrink:0}
+.pill.on-mic .pdot{background:var(--green);box-shadow:0 0 6px var(--green);animation:blink 1.4s ease-in-out infinite}
+.pill.on-screen .pdot{background:var(--orange);box-shadow:0 0 6px var(--orange);animation:blink 1.4s ease-in-out infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 
-/* Scroll */
 .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px 20px 8px;display:flex;flex-direction:column}
 .scroll::-webkit-scrollbar{display:none}
 
 .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px;padding-bottom:40px}
 .empty-ring{width:80px;height:80px;border-radius:50%;border:2px dashed var(--dim);display:flex;align-items:center;justify-content:center;font-size:30px;opacity:.5;margin-bottom:4px}
 .empty h2{font-size:16px;font-weight:500;color:var(--sub)}
-.empty p{font-size:13px;color:var(--dim);max-width:240px;line-height:1.7}
+.empty p{font-size:13px;color:var(--dim);max-width:260px;line-height:1.7}
 
 .t-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin-bottom:12px}
 .t-block{font-size:16px;line-height:1.85;font-weight:300;color:var(--text)}
@@ -43,19 +45,24 @@ body{min-height:100%;min-height:100dvh;background:var(--bg);color:var(--text);fo
 .cursor{display:inline-block;width:2px;height:16px;background:var(--green);margin-left:2px;vertical-align:middle;animation:cur 1s step-end infinite}
 @keyframes cur{0%,100%{opacity:1}50%{opacity:0}}
 
-/* AI cards */
+/* Screen snapshot preview */
+.screen-preview{margin-top:16px;border-radius:12px;overflow:hidden;border:1px solid var(--border);position:relative}
+.screen-preview img{width:100%;display:block}
+.screen-label{position:absolute;bottom:0;left:0;right:0;padding:6px 10px;background:rgba(0,0,0,.6);font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--orange);letter-spacing:.08em}
+
 .ai-section{margin-top:24px;display:flex;flex-direction:column;gap:12px}
 .ai-card{background:var(--card);border:1px solid rgba(139,127,248,.2);border-radius:14px;padding:14px 16px;animation:slideUp .3s ease}
+.ai-card.screen-card{border-color:rgba(255,159,67,.25)}
 @keyframes slideUp{from{transform:translateY(10px);opacity:0}to{transform:translateY(0);opacity:1}}
 .ai-meta{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--purple);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.ai-meta.screen{color:var(--orange)}
 .ai-meta::before{content:'✦';font-size:8px}
 .ai-body{font-size:14px;line-height:1.75;color:var(--text)}
 .thinking-card{background:var(--card);border:1px solid rgba(139,127,248,.15);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:10px;color:var(--purple);font-size:13px}
-.dots span{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--purple);margin:0 2px;animation:bounce 1.2s ease-in-out infinite}
+.dots span{display:inline-block;width:5px;height:5px;border-radius:50%;background:currentColor;margin:0 2px;animation:bounce 1.2s ease-in-out infinite}
 .dots span:nth-child(2){animation-delay:.15s}.dots span:nth-child(3){animation-delay:.3s}
 @keyframes bounce{0%,80%,100%{transform:translateY(0);opacity:.4}40%{transform:translateY(-4px);opacity:1}}
 
-/* Controls */
 .controls{flex-shrink:0;padding:16px 20px;padding-bottom:max(20px,env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--border);display:flex;flex-direction:column;gap:12px}
 .mic-wrap{display:flex;align-items:center;justify-content:center;padding:4px 0}
 .mic-btn{width:80px;height:80px;border-radius:50%;border:none;cursor:pointer;background:var(--green);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;transition:transform .15s;position:relative;-webkit-user-select:none;user-select:none}
@@ -66,14 +73,17 @@ body{min-height:100%;min-height:100dvh;background:var(--bg);color:var(--text);fo
 .mic-icon{font-size:28px;line-height:1}
 .mic-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;color:#000;font-weight:500}
 .mic-btn.on .mic-label{color:#fff}
-.btn-row{display:flex;gap:10px}
-.btn-ai{flex:1;padding:13px;border-radius:12px;border:1px solid rgba(139,127,248,.4);background:var(--purple-dim);font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.04em;color:var(--purple);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:7px}
+
+.btn-row{display:flex;gap:8px}
+.btn-ai{flex:1;padding:12px 8px;border-radius:12px;border:1px solid rgba(139,127,248,.4);background:var(--purple-dim);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.03em;color:var(--purple);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px}
 .btn-ai:active:not(:disabled){background:rgba(139,127,248,.2)}
 .btn-ai:disabled{opacity:.25;cursor:not-allowed}
-.btn-cfg{padding:13px 16px;border-radius:12px;border:1px solid var(--border);background:transparent;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--sub);cursor:pointer;transition:all .2s}
+.btn-screen{padding:12px 14px;border-radius:12px;border:1px solid rgba(255,159,67,.4);background:var(--orange-dim);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.03em;color:var(--orange);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.btn-screen:active{background:rgba(255,159,67,.2)}
+.btn-screen.recording{border-color:var(--red);color:var(--red);background:rgba(255,61,90,.1)}
+.btn-cfg{padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:transparent;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--sub);cursor:pointer}
 .btn-cfg:active{background:var(--card)}
 
-/* Sheet */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:flex-end;z-index:99;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .overlay.hide{display:none}
 .sheet{width:100%;background:var(--surface);border-radius:20px 20px 0 0;border-top:1px solid var(--border);padding:20px 20px;padding-bottom:max(28px,env(safe-area-inset-bottom));animation:sheetUp .25s ease}
@@ -88,28 +98,22 @@ body{min-height:100%;min-height:100dvh;background:var(--bg);color:var(--text);fo
 .btn-save{width:100%;padding:14px;background:var(--purple);border:none;border-radius:12px;color:#fff;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;cursor:pointer}
 .demo-note{margin-top:12px;padding:11px 14px;background:var(--green-dim);border:1px solid rgba(0,232,122,.2);border-radius:10px;font-size:12px;color:var(--green);line-height:1.6}
 
-/* Toast */
 .toast{position:fixed;bottom:120px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 18px;font-size:13px;font-family:'JetBrains Mono',monospace;z-index:200;white-space:nowrap;animation:toastIn .2s ease;max-width:90vw;text-align:center}
 @keyframes toastIn{from{opacity:0;transform:translate(-50%,6px)}to{opacity:1;transform:translate(-50%,0)}}
-
-/* No speech API warning */
-.warn-banner{background:rgba(255,61,90,.1);border:1px solid rgba(255,61,90,.3);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--red);line-height:1.6;margin-bottom:12px;display:none}
-.warn-banner.show{display:block}
 </style>
 </head>
 <body>
 
-<!-- Sheet modal -->
 <div class="overlay hide" id="overlay">
   <div class="sheet">
     <div class="handle"></div>
     <h2>Anthropic API-nyckel</h2>
-    <p>Appen transkriberar med telefonens inbyggda tal-till-text (gratis). Anthropic-nyckeln används bara för AI-analysen.</p>
+    <p>Appen transkriberar med telefonens inbyggda tal-till-text (gratis). Anthropic-nyckeln används för AI-analys och skärmtolkning.</p>
     <label class="f-label">Anthropic API Key</label>
     <input class="f-input" type="password" id="k-ant" placeholder="sk-ant-…" autocomplete="off">
-    <p class="f-hint">Hämta din nyckel på console.anthropic.com → API Keys. Lagras bara lokalt på din telefon.</p>
+    <p class="f-hint">Hämta din nyckel på console.anthropic.com → API Keys. Lagras bara lokalt.</p>
     <button class="btn-save" onclick="saveKey()">Spara</button>
-    <div class="demo-note">💡 Utan nyckel transkriberas talet ändå — men AI-analysen visar ett demo-svar.</div>
+    <div class="demo-note">💡 "Spela in"-knappen fungerar bara på datorn i Chrome — inte på telefon.</div>
   </div>
 </div>
 
@@ -118,39 +122,45 @@ body{min-height:100%;min-height:100dvh;background:var(--bg);color:var(--text);fo
     <div class="logo-icon">◈</div>
     AI Listener
   </div>
-  <div class="pill" id="pill">
-    <div class="pdot"></div>
-    <span id="pill-txt">INAKTIV</span>
+  <div class="pills">
+    <div class="pill" id="pill-mic">
+      <div class="pdot"></div>
+      <span id="pill-mic-txt">MIC</span>
+    </div>
+    <div class="pill" id="pill-screen">
+      <div class="pdot"></div>
+      <span id="pill-screen-txt">SKÄRM</span>
+    </div>
   </div>
 </div>
 
 <div class="scroll" id="scroll">
-  <div class="warn-banner" id="warn">
-    ⚠️ Din webbläsare stöder inte inbyggd tal-till-text. Prova Safari på iPhone eller Chrome på Android.
-  </div>
   <div class="empty" id="empty">
-    <div class="empty-ring">🎙</div>
+    <div class="empty-ring">◈</div>
     <h2>Redo att lyssna</h2>
-    <p>Tryck på mikrofon-knappen. Appen använder telefonens inbyggda tal-till-text — ingen extra nyckel behövs.</p>
+    <p>Tryck 🎙 för att lyssna via mikrofon, eller "Spela in" för att låta AI:n se din skärm (kräver dator + Chrome).</p>
   </div>
 </div>
 
 <div class="controls">
   <div class="mic-wrap">
-    <button class="mic-btn" id="mic-btn" onclick="toggle()">
+    <button class="mic-btn" id="mic-btn" onclick="toggleMic()">
       <span class="mic-icon">🎙</span>
       <span class="mic-label" id="mic-lbl">LYSSNA</span>
     </button>
   </div>
   <div class="btn-row">
-    <button class="btn-ai" id="btn-ai" onclick="analyze()" disabled>✦ Analysera med AI</button>
+    <button class="btn-ai" id="btn-ai" onclick="analyze()" disabled>✦ Analysera</button>
+    <button class="btn-screen" id="btn-screen" onclick="toggleScreen()">📺 Spela in</button>
     <button class="btn-cfg" onclick="showSheet()">⚙</button>
   </div>
 </div>
 
 <script>
 // ── State ──
-let on = false, recognition = null, fullText = '', analyzing = false;
+let micOn = false, recognition = null, fullText = '';
+let screenOn = false, screenStream = null, screenInterval = null, lastSnapshot = null;
+let analyzing = false;
 const hasSpeech = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
 
 // ── Keys ──
@@ -159,36 +169,24 @@ function saveKey(){
   const v = document.getElementById('k-ant').value.trim();
   if(v) localStorage.setItem('al_ant', v);
   hideSheet();
-  toast(v ? 'Nyckel sparad ✓' : 'Kör utan AI-analys');
+  toast(v ? 'Nyckel sparad ✓' : 'Kör i demo-läge');
 }
-function showSheet(){
-  document.getElementById('k-ant').value = K.ant;
-  document.getElementById('overlay').classList.remove('hide');
-}
+function showSheet(){ document.getElementById('k-ant').value=K.ant; document.getElementById('overlay').classList.remove('hide'); }
 function hideSheet(){ document.getElementById('overlay').classList.add('hide'); }
-document.getElementById('overlay').addEventListener('click', e => { if(e.target===e.currentTarget) hideSheet(); });
+document.getElementById('overlay').addEventListener('click', e=>{ if(e.target===e.currentTarget) hideSheet(); });
 
-// ── Speech Recognition ──
-function toggle(){ on ? stop() : start(); }
+// ── Mic ──
+function toggleMic(){ micOn ? stopMic() : startMic(); }
 
-function start(){
-  if(!hasSpeech){
-    document.getElementById('warn').classList.add('show');
-    document.getElementById('empty').querySelector('p').textContent = 'Din webbläsare stöder inte tal-till-text. Öppna i Safari (iPhone) eller Chrome (Android).';
-    return;
-  }
-
+function startMic(){
+  if(!hasSpeech){ toast('Tal-till-text stöds inte i denna webbläsare'); return; }
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   recognition = new SR();
   recognition.lang = 'sv-SE';
   recognition.continuous = true;
   recognition.interimResults = true;
-  recognition.maxAlternatives = 1;
 
-  recognition.onstart = () => {
-    on = true;
-    updateUI();
-  };
+  recognition.onstart = () => { micOn = true; updateUI(); };
 
   recognition.onresult = (e) => {
     let interim = '';
@@ -198,97 +196,122 @@ function start(){
         fullText += (fullText ? ' ' : '') + t.trim();
         renderTranscript('');
         document.getElementById('btn-ai').disabled = false;
-      } else {
-        interim += t;
-      }
+      } else { interim += t; }
     }
     if(interim) renderTranscript(interim);
   };
 
   recognition.onerror = (e) => {
-    if(e.error === 'not-allowed'){
-      toast('Mikrofonåtkomst nekades — kontrollera inställningar');
-    } else if(e.error === 'no-speech'){
-      // silently restart
-    } else {
-      toast('Fel: ' + e.error);
-    }
+    if(e.error === 'not-allowed') toast('Mikrofonåtkomst nekades');
   };
 
-  recognition.onend = () => {
-    // Auto-restart if still supposed to be on
-    if(on){
-      try { recognition.start(); } catch(e){}
-    }
-  };
-
-  try {
-    recognition.start();
-  } catch(e){
-    toast('Kunde inte starta mikrofon');
-  }
+  recognition.onend = () => { if(micOn) try{ recognition.start(); }catch(e){} };
+  try{ recognition.start(); }catch(e){ toast('Kunde inte starta mikrofon'); }
 }
 
-function stop(){
-  on = false;
-  if(recognition){
-    recognition.onend = null; // prevent auto-restart
-    recognition.stop();
-    recognition = null;
-  }
+function stopMic(){
+  micOn = false;
+  if(recognition){ recognition.onend=null; recognition.stop(); recognition=null; }
   updateUI();
   document.querySelector('.cursor')?.remove();
-  document.querySelector('.interim')?.remove();
 }
 
-// ── Render ──
-function renderTranscript(interim){
+// ── Screen recording ──
+async function toggleScreen(){
+  screenOn ? stopScreen() : await startScreen();
+}
+
+async function startScreen(){
+  if(!navigator.mediaDevices?.getDisplayMedia){
+    toast('Skärminspelning stöds inte — öppna i Chrome på datorn');
+    return;
+  }
+  try {
+    screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+    screenOn = true;
+    updateUI();
+    toast('Skärminspelning igång — tar bild var 10:e sekund');
+
+    // Take first snapshot immediately
+    await takeSnapshot();
+    // Then every 10 seconds
+    screenInterval = setInterval(takeSnapshot, 10000);
+
+    // Stop if user ends share via browser UI
+    screenStream.getVideoTracks()[0].onended = () => stopScreen();
+
+  } catch(e){
+    if(e.name !== 'NotAllowedError') toast('Kunde inte starta skärminspelning: ' + e.message);
+  }
+}
+
+function stopScreen(){
+  screenOn = false;
+  if(screenStream){ screenStream.getTracks().forEach(t=>t.stop()); screenStream=null; }
+  clearInterval(screenInterval);
+  updateUI();
+  toast('Skärminspelning stoppad');
+}
+
+async function takeSnapshot(){
+  if(!screenStream) return;
+  const track = screenStream.getVideoTracks()[0];
+  if(!track) return;
+
+  // Capture frame using ImageCapture API or canvas fallback
+  let dataUrl = null;
+  try {
+    if(window.ImageCapture){
+      const capture = new ImageCapture(track);
+      const bitmap = await capture.grabFrame();
+      const canvas = document.createElement('canvas');
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      canvas.getContext('2d').drawImage(bitmap, 0, 0);
+      dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+    } else {
+      // Fallback: draw video element
+      const video = document.createElement('video');
+      video.srcObject = screenStream;
+      await video.play();
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth || 1280;
+      canvas.height = video.videoHeight || 720;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+      video.pause();
+    }
+  } catch(e){
+    console.error('Snapshot failed:', e);
+    return;
+  }
+
+  if(!dataUrl) return;
+  lastSnapshot = dataUrl;
+  showSnapshotPreview(dataUrl);
+
+  // Auto-analyze with Claude if key exists
+  if(K.ant) await analyzeScreen(dataUrl);
+}
+
+function showSnapshotPreview(dataUrl){
   const sc = document.getElementById('scroll');
   document.getElementById('empty')?.remove();
 
-  let label = document.getElementById('t-label');
-  if(!label){
-    label = document.createElement('div');
-    label.id='t-label'; label.className='t-label';
-    label.textContent='Transkribering';
-    const ai = sc.querySelector('.ai-section');
-    ai ? sc.insertBefore(label, ai) : sc.appendChild(label);
+  let preview = document.getElementById('screen-preview');
+  if(!preview){
+    preview = document.createElement('div');
+    preview.id='screen-preview'; preview.className='screen-preview';
+    const aiSec = document.getElementById('ai-sec');
+    aiSec ? sc.insertBefore(preview, aiSec) : sc.appendChild(preview);
   }
-
-  let block = document.getElementById('t-block');
-  if(!block){
-    block = document.createElement('div');
-    block.id='t-block'; block.className='t-block';
-    const ai = sc.querySelector('.ai-section');
-    ai ? sc.insertBefore(block, ai) : sc.appendChild(block);
-  }
-
-  // Final text
-  block.textContent = fullText + (fullText ? ' ' : '');
-
-  // Interim (in progress)
-  if(interim){
-    const iSpan = document.createElement('span');
-    iSpan.className='interim';
-    iSpan.textContent = interim;
-    block.appendChild(iSpan);
-  }
-
-  // Cursor
-  if(on){
-    const c = document.createElement('span');
-    c.className='cursor';
-    block.appendChild(c);
-  }
-
+  const t = new Date().toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  preview.innerHTML = `<img src="${dataUrl}"><div class="screen-label">📺 Skärmbild · ${t}</div>`;
   sc.scrollTop = sc.scrollHeight;
 }
 
-// ── Analyze ──
-async function analyze(){
-  if(analyzing || !fullText.trim()) return;
-  analyzing = true;
-  document.getElementById('btn-ai').disabled = true;
+async function analyzeScreen(dataUrl){
+  if(!K.ant) return;
 
   const sc = document.getElementById('scroll');
   let aiSec = document.getElementById('ai-sec');
@@ -299,71 +322,136 @@ async function analyze(){
   }
 
   const th = document.createElement('div');
-  th.className='thinking-card'; th.id='thinking';
-  th.innerHTML='<span>AI analyserar</span><div class="dots"><span></span><span></span><span></span></div>';
+  th.className='thinking-card'; th.style.color='var(--orange)'; th.id='thinking-screen';
+  th.innerHTML='<span>Analyserar skärm</span><div class="dots"><span></span><span></span><span></span></div>';
   aiSec.appendChild(th);
   sc.scrollTop = sc.scrollHeight;
 
-  const reply = K.ant ? await callClaude(fullText) : await demoReply();
-
-  document.getElementById('thinking')?.remove();
-
-  const t = new Date().toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'});
-  const card = document.createElement('div');
-  card.className='ai-card';
-  card.innerHTML=`<div class="ai-meta">Claude · ${t}</div><div class="ai-body">${safe(reply)}</div>`;
-  aiSec.appendChild(card);
-  sc.scrollTop = sc.scrollHeight;
-
-  analyzing = false;
-  document.getElementById('btn-ai').disabled = false;
-}
-
-async function callClaude(text){
   try {
+    const base64 = dataUrl.split(',')[1];
     const r = await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':K.ant,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':K.ant,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
       body: JSON.stringify({
         model:'claude-sonnet-4-6', max_tokens:400,
-        messages:[{role:'user',content:`Du lyssnar på ett samtal via mikrofon. Transkribering:\n\n"${text}"\n\nGe en kort analys på svenska (max 120 ord): vad handlar det om, vad är viktigt, finns det beslut eller åtgärdspunkter?`}]
+        messages:[{
+          role:'user',
+          content:[
+            { type:'image', source:{ type:'base64', media_type:'image/jpeg', data:base64 } },
+            { type:'text', text:'Vad ser du på den här skärmbilden? Beskriv kortfattat på svenska (max 100 ord) vad som visas och vad som är viktigt eller intressant.' }
+          ]
+        }]
       })
     });
-    if(!r.ok) throw new Error('HTTP ' + r.status);
     const d = await r.json();
-    return d.content?.[0]?.text || 'Inget svar.';
+    const reply = d.content?.[0]?.text || 'Inget svar.';
+
+    document.getElementById('thinking-screen')?.remove();
+    const t = new Date().toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'});
+    const card = document.createElement('div');
+    card.className='ai-card screen-card';
+    card.innerHTML=`<div class="ai-meta screen">📺 Skärm · ${t}</div><div class="ai-body">${safe(reply)}</div>`;
+    aiSec.appendChild(card);
+    sc.scrollTop = sc.scrollHeight;
+    document.getElementById('btn-ai').disabled = false;
+
   } catch(e){
-    return 'Kunde inte nå Claude: ' + e.message;
+    document.getElementById('thinking-screen')?.remove();
+    toast('Skärmanalys misslyckades: ' + e.message);
   }
 }
 
-async function demoReply(){
-  await new Promise(r=>setTimeout(r,1600));
-  return 'Demo-svar: Transkriberingen fångades via telefonens inbyggda tal-till-text. För riktig AI-analys — lägg till din Anthropic-nyckel via ⚙.';
+// ── Transcript ──
+function renderTranscript(interim){
+  const sc = document.getElementById('scroll');
+  document.getElementById('empty')?.remove();
+
+  let label = document.getElementById('t-label');
+  if(!label){
+    label = document.createElement('div');
+    label.id='t-label'; label.className='t-label'; label.textContent='Transkribering';
+    const first = sc.querySelector('#screen-preview, .ai-section');
+    first ? sc.insertBefore(label, first) : sc.appendChild(label);
+  }
+  let block = document.getElementById('t-block');
+  if(!block){
+    block = document.createElement('div');
+    block.id='t-block'; block.className='t-block';
+    const first = sc.querySelector('#screen-preview, .ai-section');
+    first ? sc.insertBefore(block, first) : sc.appendChild(block);
+  }
+  block.textContent = fullText + (fullText ? ' ' : '');
+  if(interim){ const s=document.createElement('span'); s.className='interim'; s.textContent=interim; block.appendChild(s); }
+  if(micOn){ const c=document.createElement('span'); c.className='cursor'; block.appendChild(c); }
+  sc.scrollTop = sc.scrollHeight;
 }
+
+// ── Analyze (mic text) ──
+async function analyze(){
+  if(analyzing || !fullText.trim()) return;
+  analyzing = true;
+  document.getElementById('btn-ai').disabled = true;
+
+  const sc = document.getElementById('scroll');
+  let aiSec = document.getElementById('ai-sec');
+  if(!aiSec){ aiSec=document.createElement('div'); aiSec.id='ai-sec'; aiSec.className='ai-section'; sc.appendChild(aiSec); }
+
+  const th=document.createElement('div'); th.className='thinking-card'; th.id='thinking';
+  th.innerHTML='<span>AI analyserar</span><div class="dots"><span></span><span></span><span></span></div>';
+  aiSec.appendChild(th); sc.scrollTop=sc.scrollHeight;
+
+  const reply = K.ant ? await callClaude(fullText) : await demoReply();
+  document.getElementById('thinking')?.remove();
+
+  const t=new Date().toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'});
+  const card=document.createElement('div'); card.className='ai-card';
+  card.innerHTML=`<div class="ai-meta">Claude · ${t}</div><div class="ai-body">${safe(reply)}</div>`;
+  aiSec.appendChild(card); sc.scrollTop=sc.scrollHeight;
+
+  analyzing=false; document.getElementById('btn-ai').disabled=false;
+}
+
+async function callClaude(text){
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':K.ant,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:400,
+        messages:[{role:'user',content:`Transkribering från mikrofon:\n\n"${text}"\n\nGe en kort analys på svenska (max 120 ord): vad handlar det om, vad är viktigt, finns det beslut eller åtgärdspunkter?`}]})
+    });
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d=await r.json(); return d.content?.[0]?.text||'Inget svar.';
+  }catch(e){ return 'Kunde inte nå Claude: '+e.message; }
+}
+
+async function demoReply(){ await new Promise(r=>setTimeout(r,1500)); return 'Demo-svar: Lägg till din Anthropic-nyckel via ⚙ för riktig AI-analys.'; }
 
 // ── UI ──
 function updateUI(){
-  document.getElementById('mic-btn').classList.toggle('on', on);
-  document.getElementById('mic-lbl').textContent = on ? 'STOPP' : 'LYSSNA';
-  const pill = document.getElementById('pill');
-  pill.classList.toggle('on', on);
-  document.getElementById('pill-txt').textContent = on ? 'AI LYSSNAR' : 'INAKTIV';
+  document.getElementById('mic-btn').classList.toggle('on', micOn);
+  document.getElementById('mic-lbl').textContent = micOn ? 'STOPP' : 'LYSSNA';
+  document.getElementById('pill-mic').className = 'pill' + (micOn ? ' on-mic' : '');
+
+  const sb = document.getElementById('btn-screen');
+  sb.classList.toggle('recording', screenOn);
+  sb.innerHTML = screenOn ? '⏹ Stoppa' : '📺 Spela in';
+  document.getElementById('pill-screen').className = 'pill' + (screenOn ? ' on-screen' : '');
 }
 
 function safe(s){
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
           .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
 }
-
 function toast(msg){
   document.querySelectorAll('.toast').forEach(t=>t.remove());
   const t=document.createElement('div'); t.className='toast'; t.textContent=msg;
-  document.body.appendChild(t); setTimeout(()=>t.remove(),3200);
+  document.body.appendChild(t); setTimeout(()=>t.remove(),3500);
 }
-
-// Check support on load
-if(!hasSpeech) document.getElementById('warn').classList.add('show');
 </script>
 </body>
 </html>
