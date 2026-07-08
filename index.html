@@ -323,7 +323,7 @@ async function callClaude(text){
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':K.ant,'anthropic-version':'2023-06-01'},
+      headers:{'Content-Type':'application/json','x-api-key':K.ant,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body: JSON.stringify({
         model:'claude-sonnet-4-6', max_tokens:400,
         messages:[{role:'user',content:`Du lyssnar på ett samtal via mikrofon. Transkribering:\n\n"${text}"\n\nGe en kort analys på svenska (max 120 ord): vad handlar det om, vad är viktigt, finns det beslut eller åtgärdspunkter?`}]
