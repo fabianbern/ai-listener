@@ -380,7 +380,7 @@ async function analyzeSnapshots(){
       content.push({ type:'text', text:`Skärmbild ${i+1} (tagen ${s.time}):` });
       content.push({ type:'image', source:{ type:'base64', media_type:'image/jpeg', data:s.dataUrl.split(',')[1] } });
     });
-    content.push({ type:'text', text:`Det här är ${toSend.length} skärmbilder tagna med några sekunders mellanrum. Vad ser du? Sammanfatta kortfattat på svenska (max 150 ord) vad som visas, vad som är viktigt eller intressant, och om det sker några förändringar mellan bilderna.` });
+    content.push({ type:'text', text:`Det här är ${toSend.length} skärmbilder tagna med några sekunders mellanrum. Fokusera enbart på innehållet som visas — text, information, ämnen och fakta. Ignorera helt vad användaren gör, klickar på eller markerar. Sammanfatta på svenska (max 150 ord) vad innehållet handlar om och vad som är viktigt eller intressant.` });
 
     const r = await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
